@@ -1,7 +1,7 @@
 # LightCraft — the desktop app (`lightcraft`) and the CLI/MCP server (`lightcraft-cli`), built from
 # this repository:
 #
-#   nix build          # → ./result/bin/lightcraft, ./result/bin/lightcraft-cli
+#   nix build          # → ./result/bin/lightraw, ./result/bin/lightraw-cli
 #
 # Kept in step with the release workflow (.github/workflows/release.yml) and packaging/env.sh:
 #   * `Cargo.lock` drives the dependencies (`cargoLock`), so there is no vendorHash to bump. The git

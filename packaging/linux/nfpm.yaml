@@ -63,11 +63,11 @@ overrides:
       - xdg-desktop-portal
 
 contents:
-  - src: ${STAGE}/usr/bin/lightcraft
-    dst: /usr/bin/lightcraft
+  - src: ${STAGE}/usr/bin/lightraw
+    dst: /usr/bin/lightraw
     file_info: { mode: 0755 }
-  - src: ${STAGE}/usr/bin/lightcraft-cli
-    dst: /usr/bin/lightcraft-cli
+  - src: ${STAGE}/usr/bin/lightraw-cli
+    dst: /usr/bin/lightraw-cli
     file_info: { mode: 0755 }
   - src: ${STAGE}/usr/share/
     dst: /usr/share/

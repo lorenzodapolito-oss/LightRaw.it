@@ -27,9 +27,9 @@ render() {
   resvg -w "$size" -h "$size" "$src" "$out" </dev/null
 }
 
-render "$SVG" 1024 "$DIR/lightcraft-1024.png"
+render "$SVG" 1024 "$DIR/lightraw-1024.png"
 # Runtime window/Dock icon on macOS (embedded by apps/lightcraft/src/main.rs).
-render "$MAC" 512 "$DIR/lightcraft-macos-512.png"
+render "$MAC" 512 "$DIR/lightraw-macos-512.png"
 
 # Linux hicolor theme (also the runtime window icon on Windows and Linux: 256x256).
 for s in 16 24 32 48 64 128 256 512; do
@@ -45,18 +45,18 @@ for s in 16 20 24 32 40 48 64 128 256; do
   render "$SVG" "$s" "$TMP/ico-$s.png"
   ICO_PNGS+=("$TMP/ico-$s.png")
 done
-(cd "$ROOT" && cargo run -q -p xtask -- ico "$DIR/lightcraft.ico" "${ICO_PNGS[@]}")
+(cd "$ROOT" && cargo run -q -p xtask -- ico "$DIR/lightraw.ico" "${ICO_PNGS[@]}")
 
 # macOS .icns.
 if command -v iconutil >/dev/null; then
-  SET="$TMP/lightcraft.iconset"
+  SET="$TMP/lightraw.iconset"
   mkdir -p "$SET"
   for s in 16 32 128 256 512; do
     render "$MAC" "$s" "$SET/icon_${s}x${s}.png"
     render "$MAC" $((s * 2)) "$SET/icon_${s}x${s}@2x.png"
   done
-  iconutil -c icns -o "$DIR/lightcraft.icns" "$SET"
+  iconutil -c icns -o "$DIR/lightraw.icns" "$SET"
 else
-  echo "warning: iconutil not found (macOS only); lightcraft.icns not regenerated" >&2
+  echo "warning: iconutil not found (macOS only); lightraw.icns not regenerated" >&2
 fi
 echo "icons written to $DIR"

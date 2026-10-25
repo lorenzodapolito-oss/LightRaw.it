@@ -1,4 +1,4 @@
-//! Windows only: embed the app icon and version info (VERSIONINFO) into `lightcraft.exe`, so
+//! Windows only: embed the app icon and version info (VERSIONINFO) into `lightraw.exe`, so
 //! Explorer, the taskbar, the Start menu and Alt-Tab show the lynx.
 //!
 //! On every other target this does nothing. A missing resource compiler is a warning, so a
@@ -7,22 +7,22 @@
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=../../assets/app-icon/lightcraft.ico");
+    println!("cargo:rerun-if-changed=../../assets/app-icon/lightraw.ico");
     println!("cargo:rerun-if-env-changed=LIGHTCRAFT_REQUIRE_WINRES");
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() != Ok("windows") {
         return;
     }
     let mut res = winresource::WindowsResource::new();
-    res.set_icon("../../assets/app-icon/lightcraft.ico")
-        .set("ProductName", "LightCraft")
-        .set("FileDescription", "LightCraft photo library and raw developer")
-        .set("LegalCopyright", "Copyright (c) the LightCraft authors. MIT OR Apache-2.0.")
-        .set("OriginalFilename", "lightcraft.exe")
-        .set("InternalName", "lightcraft");
+    res.set_icon("../../assets/app-icon/lightraw.ico")
+        .set("ProductName", "LightRaw")
+        .set("FileDescription", "LightRaw photo library and raw developer")
+        .set("LegalCopyright", "Copyright (c) the LightRaw authors. MIT OR Apache-2.0.")
+        .set("OriginalFilename", "lightraw.exe")
+        .set("InternalName", "lightraw");
     if let Err(e) = res.compile() {
         if std::env::var_os("LIGHTCRAFT_REQUIRE_WINRES").is_some() {
             panic!("embedding Windows resources failed: {e}");
         }
-        println!("cargo:warning=lightcraft.exe built without icon/version resources: {e}");
+        println!("cargo:warning=lightraw.exe built without icon/version resources: {e}");
     }
 }

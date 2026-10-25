@@ -1,11 +1,11 @@
-//! LightCraft desktop app.
+//! LightRaw desktop app.
 //!
 //! Usage: `lightcraft [--library DIR | --memory] [--no-demo] [--control <port>] [files or folders…]`
 //!
 //! The library (catalog, presets, thumbnail cache) lives in `--library DIR`, else
 //! `$LIGHTCRAFT_LIBRARY`, else — with Settings ▸ General ▸ At launch set to *Ask me*, or Alt/Option
 //! held as the window appears — the one chosen in a list of the recent libraries, else the library
-//! last opened, else `~/Pictures/LightCraft Library`
+//! last opened, else `~/Pictures/LightRaw Library`
 //! ([`lightcraft_ui_egui::panels::library_problem::launch_plan`]); a new library starts with the
 //! procedural demo photos unless `--no-demo` or files are given. Files and folders on the command
 //! line are imported (duplicates are skipped). `--memory` runs an in-memory session that writes
@@ -51,7 +51,7 @@ const APP_ID: &str = "ai.storyteller.lightcraft";
 /// gets the version with Apple's transparent margin so it sits right among the other Dock icons.
 fn app_icon() -> egui::IconData {
     #[cfg(target_os = "macos")]
-    let png: &[u8] = include_bytes!("../../../assets/app-icon/lightcraft-macos-512.png");
+    let png: &[u8] = include_bytes!("../../../assets/app-icon/lightraw-macos-512.png");
     #[cfg(not(target_os = "macos"))]
     let png: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/256x256/apps/ai.storyteller.lightcraft.png");
     eframe::icon_data::from_png_bytes(png).unwrap_or_default()
@@ -112,7 +112,7 @@ impl eframe::App for App {
 /// a second; anything slower gives way to quitting.
 const EXIT_WAIT: std::time::Duration = std::time::Duration::from_secs(2);
 
-/// The window's renderer (egui-wgpu): eframe's defaults, with LightCraft's backend choice — DX12
+/// The window's renderer (egui-wgpu): eframe's defaults, with LightRaw's backend choice — DX12
 /// alone on Windows unless `LIGHTCRAFT_GPU_BACKEND` / `WGPU_BACKEND` say otherwise (issue #136:
 /// with Vulkan in the set, wgpu loads the Vulkan driver even when it then picks DX12) — and DX12
 /// shaders compiled with FXC, never a stray `dxcompiler.dll` (issue #471).
@@ -161,8 +161,8 @@ fn gpu_crash_check_at(marker: Option<std::path::PathBuf>, in_memory: bool) -> Op
 
 fn gpu_crash_notice(what: &str) -> String {
     format!(
-        "LightCraft closed unexpectedly while starting the GPU last time ({what}), so GPU rendering is now off and photos render on the CPU. \
-         To try the GPU again, turn on Settings ▸ Performance ▸ Use the GPU for rendering; to try another graphics backend, start LightCraft with \
+        "LightRaw closed unexpectedly while starting the GPU last time ({what}), so GPU rendering is now off and photos render on the CPU. \
+         To try the GPU again, turn on Settings ▸ Performance ▸ Use the GPU for rendering; to try another graphics backend, start LightRaw with \
          LIGHTCRAFT_GPU_BACKEND=dx12, vulkan or off (see docs/gpu-pipeline.md → Troubleshooting)."
     )
 }
@@ -180,7 +180,7 @@ fn gpu_lost_reason() -> Option<String> {
     lightcraft_engine::gpu::unavailable_reason().and_then(|r| r.strip_prefix("stopped after a GPU failure: ").map(str::to_string))
 }
 
-/// Record that LightCraft stopped after the GPU was lost, for the next launch.
+/// Record that LightRaw stopped after the GPU was lost, for the next launch.
 fn record_gpu_lost(marker: Option<&std::path::Path>, reason: &str) {
     let Some(m) = marker else { return };
     if let Some(d) = m.parent() {
@@ -200,7 +200,7 @@ fn gpu_lost_check_at(marker: Option<&std::path::Path>, in_memory: bool) -> Optio
         let _ = std::fs::remove_file(m);
     }
     Some(format!(
-        "LightCraft stopped last time after the graphics driver reset the GPU ({}) while photos rendered on it, so GPU rendering \
+        "LightRaw stopped last time after the graphics driver reset the GPU ({}) while photos rendered on it, so GPU rendering \
          is now off and photos render on the CPU. To try the GPU again, turn on Settings ▸ Performance ▸ Use the GPU for rendering; \
          an up-to-date graphics driver may help.",
         reason.trim()
@@ -428,7 +428,7 @@ impl PrefsWriter {
             Err(e) => {
                 if !self.failing {
                     log::warn!("{e}");
-                    app.notices.push(format!("{e}. LightCraft keeps trying."));
+                    app.notices.push(format!("{e}. LightRaw keeps trying."));
                 }
                 self.failing = true;
                 // don't retry every frame
@@ -649,7 +649,7 @@ fn services(cc: &eframe::CreationContext<'_>, log_file: Option<&std::path::Path>
         save_preset_file: Some(Box::new(|name: &str| {
             file_dialog()
                 .set_title(lightcraft_ui_egui::i18n::tr("Export Presets"))
-                .add_filter_nocase(lightcraft_ui_egui::i18n::tr("LightCraft Preset"), &["lcpreset"])
+                .add_filter_nocase(lightcraft_ui_egui::i18n::tr("LightRaw Preset"), &["lcpreset"])
                 .set_file_name(name)
                 .save_file()
                 .map(|p| p.to_string_lossy().to_string())
@@ -795,7 +795,7 @@ USAGE: lightcraft [OPTIONS] [FILES/FOLDERS…]   (files and folders are imported
 OPTIONS:
   --library DIR    open (or create) this library (env LIGHTCRAFT_LIBRARY; default: the last library opened, or
                    a list of the recent ones with Settings > General > At launch: Ask me or Alt/Option held,
-                   else ~/Pictures/LightCraft Library)
+                   else ~/Pictures/LightRaw Library)
   --no-demo        don't seed a new library with the procedural demo photos
   --memory         throwaway in-memory session (alias --demo); nothing is saved
   --control PORT   serve the JSON-lines control channel on 127.0.0.1:PORT (env LIGHTCRAFT_CONTROL_PORT;
@@ -804,13 +804,13 @@ OPTIONS:
 
 ENVIRONMENT:
   LIGHTCRAFT_CONFIG_DIR=DIR   use this settings folder instead of the platform default (empty = no settings folder).
-                   Without it, a portable.txt file next to the program puts the folder beside it (LightCraftData)
+                   Without it, a portable.txt file next to the program puts the folder beside it (LightRawData)
   LIGHTCRAFT_GPU_BACKEND=dx12|vulkan|metal|auto|off   graphics backend (default: DX12 on Windows, Metal on macOS,
                    Vulkan on Linux; off = render on the CPU); else WGPU_BACKEND. LIGHTCRAFT_GPU=0: CPU rendering.
   LIGHTCRAFT_SAM3_DIR=DIR   the SAM 3 model for Object / Describe masks (default: <settings folder>/models/sam3;
-                   optional: LightCraft offers to download it when first needed)
+                   optional: LightRaw offers to download it when first needed)
   LIGHTCRAFT_SAM3_MIRRORS=URL,…   where to download the SAM 3 model from (base URLs, tried in order)
-  LIGHTCRAFT_LOG=info|debug   more log detail from LightCraft itself (default: info from LightCraft, warnings
+  LIGHTCRAFT_LOG=info|debug   more log detail from LightRaw itself (default: info from LightRaw, warnings
                    from other crates); else RUST_LOG=<env_logger directives>. Records go to stderr and to
                    <settings folder>/logs/lightcraft.log (previous runs: lightcraft.1.log, lightcraft.2.log)
 ";
@@ -909,7 +909,7 @@ fn main() -> eframe::Result {
         match log_dir().filter(|_| !in_memory) {
             Some(dir) => match logger.attach_dir(&dir) {
                 Ok(path) => {
-                    log::info!("LightCraft {}, log file {}", env!("CARGO_PKG_VERSION"), path.display());
+                    log::info!("LightRaw {}, log file {}", env!("CARGO_PKG_VERSION"), path.display());
                     log_file = Some(path);
                 }
                 // The file sink has given up by now, so this goes to standard error only.
@@ -946,14 +946,14 @@ fn main() -> eframe::Result {
     let window_gpu::Chosen { renderer, wgpu_options, which: window_renderer, notice: window_notice } = window_gpu::choose(&win_files);
     win_files.arm(window_renderer);
     let win_files_app = win_files.clone();
-    // the window came up: a failure after this is LightCraft stopping, not a start that failed
+    // the window came up: a failure after this is LightRaw stopping, not a start that failed
     let came_up = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
     let came_up_app = came_up.clone();
     // how the window was when the app was last used (checked: the settings file is a file)
     let opens_as = prefs.as_ref().and_then(|ui| ui.window).and_then(lightcraft_ui_egui::window_place::WindowPlace::checked);
     let options = eframe::NativeOptions {
         renderer,
-        viewport: as_remembered(egui::ViewportBuilder::default().with_title("LightCraft"), opens_as)
+        viewport: as_remembered(egui::ViewportBuilder::default().with_title(lightcraft_ui_egui::APP_TITLE), opens_as)
             .with_min_inner_size(lightcraft_ui_egui::window_place::MIN_SIZE)
             .with_drag_and_drop(true)
             .with_fullsize_content_view(true)
@@ -981,7 +981,7 @@ fn main() -> eframe::Result {
     }
     let started = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         eframe::run_native(
-            "LightCraft",
+            "LightRaw",
             options,
             Box::new(move |cc| {
                 // the window's renderer is up (eframe calls this after creating it)
@@ -1059,7 +1059,7 @@ fn main() -> eframe::Result {
         )
     }));
     if came_up.load(std::sync::atomic::Ordering::Relaxed) {
-        // the window was up: a panic that escaped it now is LightCraft stopping, typically the
+        // the window was up: a panic that escaped it now is LightRaw stopping, typically the
         // window's renderer after the graphics driver reset the GPU (issue #1337: egui-wgpu panics
         // on the lost device). Not a failed start: no other renderer is tried, and the message
         // says what happened.
@@ -1089,7 +1089,7 @@ fn main() -> eframe::Result {
     if let Err(e) = &started {
         // the renderer never came up: start again, which tries the next one in the chain
         if window_gpu::relaunch_after_failure(&win_files) {
-            log::error!("LightCraft could not open its window with {}: {e}; trying the next renderer", window_renderer.name());
+            log::error!("LightRaw could not open its window with {}: {e}; trying the next renderer", window_renderer.name());
             return Ok(());
         }
         startup_failed(&e.to_string(), log_file.as_deref());
@@ -1097,22 +1097,22 @@ fn main() -> eframe::Result {
     started
 }
 
-/// What to tell the user when LightCraft stopped while running (`error`), and why when the GPU
+/// What to tell the user when LightRaw stopped while running (`error`), and why when the GPU
 /// was lost (`lost`): GPU rendering is off from the next start.
 fn stopped_text(error: &str, lost: Option<&str>) -> String {
     match lost {
         Some(reason) => format!(
-            "{error}. The graphics driver reset the GPU ({reason}). LightCraft renders on the CPU from its next start; \
+            "{error}. The graphics driver reset the GPU ({reason}). LightRaw renders on the CPU from its next start; \
              Settings ▸ Performance ▸ Use the GPU for rendering turns the GPU back on"
         ),
         None => error.to_string(),
     }
 }
 
-/// LightCraft stopped while its window was up: say so in the log and in a native message box
+/// LightRaw stopped while its window was up: say so in the log and in a native message box
 /// naming the log file (as [`startup_failed`] does for a start that failed).
 fn stopped_while_running(text: &str, log_file: Option<&std::path::Path>) {
-    log::error!("LightCraft stopped: {text}");
+    log::error!("LightRaw stopped: {text}");
     if std::env::var_os("LIGHTCRAFT_NO_PREFS").is_some() {
         return; // tests and scripts: no dialog to click away
     }
@@ -1129,7 +1129,7 @@ fn stopped_while_running(text: &str, log_file: Option<&std::path::Path>) {
 /// message box naming the log file, instead of exiting without a trace — the release builds have
 /// no console on Windows, and an app started from Finder shows no standard error (issue #260).
 fn startup_failed(error: &str, log_file: Option<&std::path::Path>) {
-    log::error!("LightCraft could not open its window: {error}");
+    log::error!("LightRaw could not open its window: {error}");
     if std::env::var_os("LIGHTCRAFT_NO_PREFS").is_some() {
         return; // tests and scripts: no dialog to click away
     }
@@ -1376,13 +1376,13 @@ mod tests {
         assert!(gpu_lost_check_at(Some(&m), false).is_some());
         assert!(!m.exists());
         assert_eq!(gpu_lost_check_at(Some(&m), false), None, "said once");
-        // the message box: LightCraft stopped (not "could not open its window"), and why
+        // the message box: LightRaw stopped (not "could not open its window"), and why
         let text = stopped_text("its window stopped drawing (the renderer panicked)", Some("device lost (Unknown): Device is lost"));
         assert!(text.contains("reset the GPU (device lost (Unknown)") && text.contains("renders on the CPU from its next start"), "{text}");
         assert_eq!(stopped_text("its window stopped drawing", None), "its window stopped drawing");
         let (title, body) = lightcraft_ui_egui::i18n::stopped_message(&text, Some("/logs/lightcraft.log"));
-        assert_eq!(title, "LightCraft stopped");
-        assert!(body.starts_with("LightCraft stopped unexpectedly: its window stopped drawing") && body.ends_with("/logs/lightcraft.log"), "{body}");
+        assert_eq!(title, "LightRaw stopped");
+        assert!(body.starts_with("LightRaw stopped unexpectedly: its window stopped drawing") && body.ends_with("/logs/lightcraft.log"), "{body}");
         let _ = std::fs::remove_dir_all(&d);
     }
 

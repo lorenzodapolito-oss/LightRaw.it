@@ -6,7 +6,7 @@ use std::time::{Duration, Instant};
 
 #[test]
 fn broken_stdout_exits_with_stdin_still_open() {
-    let mut child = Command::new(env!("CARGO_BIN_EXE_lightcraft-cli"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_lightraw-cli"))
         .arg("mcp")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -33,6 +33,6 @@ fn broken_stdout_exits_with_stdin_still_open() {
     child.stderr.take().unwrap().read_to_string(&mut stderr).unwrap();
     assert!(stderr.contains("serving MCP on stdio"), "CLI must reach the MCP transport: {stderr}");
     assert!(!status.success(), "broken protocol output must be reported: {stderr}");
-    assert!(stderr.contains("lightcraft-cli:"), "CLI must report the transport error: {stderr}");
+    assert!(stderr.contains("lightraw-cli:"), "CLI must report the transport error: {stderr}");
     drop(input);
 }

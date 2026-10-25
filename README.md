@@ -1,4 +1,56 @@
 <p align="center">
+  <img alt="LightRaw icon" src="assets/app-icon/hicolor/256x256/apps/ai.storyteller.lightcraft.png" width="128" height="128">
+</p>
+
+<h1 align="center">LightRaw</h1>
+
+<p align="center">
+  <b>LightRaw.it, by Lorenzo D'Apolito: a fork of <a href="https://github.com/storytold/lightcraft">LightCraft</a>, the open-source photo library and raw developer.</b><br>
+  Open source, offline, written in Rust.
+</p>
+
+## What is different here
+
+- **Own identity.** LightRaw icon, window title "LightRaw.it di Lorenzo D'Apolito", and program names `lightraw.exe` and `lightraw-cli.exe`.
+- **Portable copy** for Windows (see below).
+- **Planned:** the Camera Raw features of [DarkRaw](https://github.com/lorenzodapolito-oss/DarkRaw) in the Develop module: Auto, white-balance eyedropper and auto white balance, a Geometry panel with a crop frame and grid, and compact sliders.
+
+## Build and run on Windows
+
+You need Rust 1.95 or newer, a MinGW-w64 toolchain (for example [WinLibs](https://winlibs.com/)) and Git.
+
+```powershell
+git clone https://github.com/lorenzodapolito-oss/LightRaw.it
+cd LightRaw.it
+cargo run --release -p lightcraft
+```
+
+The Cargo package keeps its upstream name (`lightcraft`), but the program it builds is `lightraw.exe` (`target\release\lightraw.exe`).
+
+### Portable copy
+
+```powershell
+cargo build --release -p lightcraft
+powershell -ExecutionPolicy Bypass -File packaging\windows\make-portable.ps1
+```
+
+This makes `dist\LightRaw-portable` (and `dist\LightRaw-portable.zip`): `LightRaw.exe`, `portable.txt`, the command-line tool and the licences. While `portable.txt` sits next to the program, settings and recovery files go to a `LightRawData` folder beside it and nothing is written to `%APPDATA%`. With a GNU (WinLibs) build the script warns if the program needs a DLL that Windows doesn't have; copy it from WinLibs' `mingw64\bin` into the folder.
+
+## Names
+
+The Rust packages and crates keep the upstream `lightcraft-*` names so that updates from upstream merge cleanly. What you see (window title, program, data folders, icon, this page) is LightRaw.
+
+## Credits and licence
+
+LightRaw is a fork of [storytold/lightcraft](https://github.com/storytold/lightcraft) and keeps its licence, **MIT OR Apache-2.0** (see `LICENSE-MIT` and `LICENSE-APACHE`). It is an independent project, not affiliated with or endorsed by Adobe, and contains no Adobe code or assets. The ArtCraft and LightCraft names, logos and artwork in the original README below belong to their owners. The icon provenance is in [`assets/app-icon/README.md`](assets/app-icon/README.md).
+
+The rest of this page is the upstream LightCraft README, kept for reference. Its download links and installers are LightCraft's, not LightRaw's: LightRaw has no installers yet, so build it as above.
+
+---
+
+## About LightCraft (upstream README)
+
+<p align="center">
   <a href="https://getartcraft.com/">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/brand/artcraft-logo-white.svg">

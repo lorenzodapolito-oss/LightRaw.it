@@ -24,7 +24,7 @@ impl StderrLog {
 
 impl log::Log for StderrLog {
     fn enabled(&self, m: &Metadata) -> bool {
-        m.level() <= self.level && (m.level() <= Level::Warn || m.target().starts_with("lightcraft"))
+        m.level() <= self.level && (m.level() <= Level::Warn || m.target().starts_with("lightcraft") || m.target().starts_with("lightraw"))
     }
     fn log(&self, r: &Record) {
         if self.enabled(r.metadata()) {

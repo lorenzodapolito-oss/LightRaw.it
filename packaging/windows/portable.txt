@@ -1,0 +1,10 @@
+LightRaw portable mode
+
+While this file sits next to the program (LightRaw.exe), LightRaw keeps its
+preferences, brush presets, crash-recovery autosaves and startup state in the LightRawData folder
+beside it, and writes nothing to %APPDATA% or %LOCALAPPDATA%. Copy the whole folder to move LightRaw
+with its settings.
+
+Delete this file to use the normal per-user folders instead: %APPDATA%\LightRaw for settings
+and %LOCALAPPDATA%\LightRaw\Recovery for crash-recovery autosaves. If LightRawData can't be
+written (for example on a read-only drive), LightRaw says so and uses those folders instead.

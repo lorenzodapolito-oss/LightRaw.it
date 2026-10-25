@@ -4,10 +4,16 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 publish = false
-default-run = "lightcraft"
+default-run = "lightraw"
 
 [lints]
 workspace = true
+
+# The program is lightraw(.exe); the package keeps its internal name so the workspace stays easy to
+# merge with the upstream project.
+[[bin]]
+name = "lightraw"
+path = "src/main.rs"
 
 [features]
 default = ["denoise"]
@@ -32,7 +38,7 @@ pollster = { workspace = true }
 log = { workspace = true }
 
 [build-dependencies]
-# Icon + VERSIONINFO for lightcraft.exe; build.rs only uses it when targeting Windows.
+# Icon + VERSIONINFO for lightraw.exe; build.rs only uses it when targeting Windows.
 winresource = "0.1"
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]

@@ -71,8 +71,8 @@ fi
 # FreeBSD's install(1) has no -D: create the directories first.
 mkdir -p "$STAGE/bin" "$STAGE/share/applications" "$STAGE/share/mime/packages" \
   "$STAGE/share/metainfo" "$STAGE/share/icons" "$STAGE/share/doc/lightcraft"
-install -m 755 "$BIN/lightcraft" "$BIN/lightcraft-cli" "$STAGE/bin/"
-strip "$STAGE/bin/lightcraft" "$STAGE/bin/lightcraft-cli" 2>/dev/null || true
+install -m 755 "$BIN/lightraw" "$BIN/lightraw-cli" "$STAGE/bin/"
+strip "$STAGE/bin/lightraw" "$STAGE/bin/lightraw-cli" 2>/dev/null || true
 # The desktop entry, MIME type, metainfo and icons are the freedesktop files Linux ships.
 install -m 644 "$LINUX/$APP_ID.desktop" "$STAGE/share/applications/$APP_ID.desktop"
 install -m 644 "$LINUX/$APP_ID.mime.xml" "$STAGE/share/mime/packages/$APP_ID.xml"
@@ -81,7 +81,7 @@ sed -e "s/@VERSION@/$VERSION/g" -e "s/@DATE@/$LIGHTCRAFT_BUILD_DATE/g" \
 cp -R "$ROOT/assets/app-icon/hicolor" "$STAGE/share/icons/"
 copy_docs "$STAGE/share/doc/lightcraft"
 
-for f in bin/lightcraft bin/lightcraft-cli "share/applications/$APP_ID.desktop" \
+for f in bin/lightraw bin/lightraw-cli "share/applications/$APP_ID.desktop" \
   "share/icons/hicolor/256x256/apps/$APP_ID.png" "share/icons/hicolor/scalable/apps/$APP_ID.svg" \
   share/doc/lightcraft/LICENSE-MIT share/doc/lightcraft/LICENSE-APACHE; do
   if [[ ! -e "$STAGE/$f" ]]; then echo "error: $f is missing from the package" >&2; exit 1; fi
@@ -92,7 +92,7 @@ mkdir -p "$OUT_DIR"
 tar -C "$WORK" -czf "$OUT_DIR/$BASENAME.tar.gz" "$BASENAME"
 echo "wrote $OUT_DIR/$BASENAME.tar.gz"
 
-"$STAGE/bin/lightcraft-cli" --version
+"$STAGE/bin/lightraw-cli" --version
 if [[ "$DRY_RUN" = 1 ]]; then
   echo "==> dry run: tarball contents"
   tar -tzvf "$OUT_DIR/$BASENAME.tar.gz"

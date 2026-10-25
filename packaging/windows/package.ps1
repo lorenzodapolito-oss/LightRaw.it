@@ -5,7 +5,7 @@
 .DESCRIPTION
   Produces, in $env:DIST (default: dist/release):
     lightcraft-<version>-windows-<arch>.msi            per-machine installer (WiX v5)
-    lightcraft-<version>-windows-<arch>-portable.zip   lightcraft.exe + lightcraft-cli.exe
+    lightcraft-<version>-windows-<arch>-portable.zip   lightraw.exe + lightraw-cli.exe
 
   The binaries link the C runtime statically (+crt-static), so neither the MSI nor the portable
   zip needs the Visual C++ redistributable. Signing is delegated to sign.ps1 (skipped with a
@@ -106,7 +106,7 @@ function Get-PeHeader([string] $Path) {
   return @{ Machine = [BitConverter]::ToUInt16($bytes, $pe + 4); Subsystem = [BitConverter]::ToUInt16($bytes, $pe + 0x5C) }
 }
 $Machine = switch ($Arch) { 'x64' { 0x8664 } 'x86' { 0x14C } 'arm64' { 0xAA64 } }
-foreach ($check in @(@('lightcraft.exe', 2), @('lightcraft-cli.exe', 3))) {
+foreach ($check in @(@('lightraw.exe', 2), @('lightraw-cli.exe', 3))) {
   $h = Get-PeHeader (Join-Path $Bin $check[0])
   if ($h.Machine -ne $Machine) { throw "$($check[0]) is for machine 0x$('{0:X}' -f $h.Machine), expected 0x$('{0:X}' -f $Machine) ($Arch)" }
   if ($h.Subsystem -ne $check[1]) { throw "$($check[0]) has PE subsystem $($h.Subsystem), expected $($check[1])" }
@@ -115,12 +115,12 @@ foreach ($check in @(@('lightcraft.exe', 2), @('lightcraft-cli.exe', 3))) {
 $Stage = Join-Path $TargetDir "windows-package\$Arch"
 Remove-Item -Recurse -Force $Stage -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $Stage | Out-Null
-Copy-Item (Join-Path $Bin 'lightcraft.exe'), (Join-Path $Bin 'lightcraft-cli.exe') $Stage
+Copy-Item (Join-Path $Bin 'lightraw.exe'), (Join-Path $Bin 'lightraw-cli.exe') $Stage
 # Include the embedded fonts' unmodified OFL texts in both installer and portable releases.
 . (Join-Path $PSScriptRoot 'font-licences.ps1')
 Write-FontLicences (Join-Path $Stage 'FONT-LICENCES.txt') (Join-Path $Root 'assets\fonts\OFL-Inter.txt') $env:CRAFT_FONTS_DIR
 
-& (Join-Path $PSScriptRoot 'sign.ps1') (Join-Path $Stage 'lightcraft.exe') (Join-Path $Stage 'lightcraft-cli.exe')
+& (Join-Path $PSScriptRoot 'sign.ps1') (Join-Path $Stage 'lightraw.exe') (Join-Path $Stage 'lightraw-cli.exe')
 
 # ---- MSI ---------------------------------------------------------------------------------------
 # Extensions must match the WiX tool version (5.0.2, see release.yml). Re-adding is harmless.
@@ -141,7 +141,7 @@ New-PanelBitmap $UiBannerBmp 493 58 0 ([byte[]](0xFF, 0xFF, 0xFF)) ([byte[]](0xF
 $Msi = Join-Path $Dist "lightcraft-$Version-windows-$Arch.msi"
 Invoke-Native 'wix build' {
   wix build (Join-Path $PSScriptRoot 'lightcraft.wxs') -arch $Arch -culture en-us @ExtArgs `
-    -d "Version=$MsiVersion" -d "BinDir=$Stage" -d "IconPath=$(Join-Path $Root 'assets\app-icon\lightcraft.ico')" `
+    -d "Version=$MsiVersion" -d "BinDir=$Stage" -d "IconPath=$(Join-Path $Root 'assets\app-icon\lightraw.ico')" `
     -d "UiDialogBmp=$UiDialogBmp" -d "UiBannerBmp=$UiBannerBmp" `
     -o $Msi
 }
@@ -181,7 +181,7 @@ $HostArch = switch ($nativeArchitecture) {
   default { 'unknown' }
 }
 if ($Arch -ne 'arm64' -or $HostArch -eq 'arm64') {
-  Invoke-Native 'lightcraft-cli --version' { & (Join-Path $Stage 'lightcraft-cli.exe') --version }
+  Invoke-Native 'lightcraft-cli --version' { & (Join-Path $Stage 'lightraw-cli.exe') --version }
 } else {
   Write-Output "skipping lightcraft-cli --version: an $Arch build doesn't run on this $HostArch machine"
 }

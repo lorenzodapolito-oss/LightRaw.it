@@ -49,16 +49,16 @@
          the newer InstallFolder value and an explicit INSTALLFOLDER always take precedence. -->
     <Property Id="LEGACYINSTALLFOLDER">
       <RegistrySearch Id="LegacyInstallFolder" Root="HKLM"
-          Key="Software\Microsoft\Windows\CurrentVersion\App Paths\lightcraft.exe" Type="file" />
+          Key="Software\Microsoft\Windows\CurrentVersion\App Paths\lightraw.exe" Type="file" />
     </Property>
     <!-- That directory search doesn't check the executable exists, and when its unquoted path is
          gone it falls back to the text before the first space: a deleted
-         "C:\Program Files\LightCraft\lightcraft.exe" yields "C:\". Only use the folder when this
-         search, which does require lightcraft.exe, finds it too. -->
+         "C:\Program Files\LightCraft\lightraw.exe" yields "C:\". Only use the folder when this
+         search, which does require lightraw.exe, finds it too. -->
     <Property Id="LEGACYINSTALLEXE">
       <RegistrySearch Id="LegacyInstallExe" Root="HKLM"
-          Key="Software\Microsoft\Windows\CurrentVersion\App Paths\lightcraft.exe" Type="file">
-        <FileSearch Id="LegacyInstallExeFile" Name="lightcraft.exe" />
+          Key="Software\Microsoft\Windows\CurrentVersion\App Paths\lightraw.exe" Type="file">
+        <FileSearch Id="LegacyInstallExeFile" Name="lightraw.exe" />
       </RegistrySearch>
     </Property>
     <SetProperty Id="INSTALLFOLDER" Action="SetInstallFolderFromAppPaths" Value="[LEGACYINSTALLFOLDER]"
@@ -193,18 +193,18 @@
   <Fragment>
     <ComponentGroup Id="LightcraftFiles" Directory="INSTALLFOLDER">
       <Component Id="LightcraftApp" Guid="8A1D3A39-F7C1-47B1-97AE-40C80BF82F4A">
-        <File Id="LightcraftExe" Source="$(var.BinDir)\lightcraft.exe" KeyPath="yes">
+        <File Id="LightcraftExe" Source="$(var.BinDir)\lightraw.exe" KeyPath="yes">
           <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="LightCraft"
               Description="LightCraft photo library and raw developer" WorkingDirectory="INSTALLFOLDER" Advertise="yes"
               Icon="LightcraftIcon.ico" IconIndex="0" />
         </File>
 
-        <RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\App Paths\lightcraft.exe" Value="[#LightcraftExe]" Type="string" />
+        <RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\App Paths\lightraw.exe" Value="[#LightcraftExe]" Type="string" />
         <RegistryValue Root="HKLM" Key="Software\LightCraft" Name="InstallFolder" Value="[INSTALLFOLDER]" Type="string" />
       </Component>
 
       <Component Id="LightcraftCli">
-        <File Id="LightcraftCliExe" Source="$(var.BinDir)\lightcraft-cli.exe" KeyPath="yes" />
+        <File Id="LightcraftCliExe" Source="$(var.BinDir)\lightraw-cli.exe" KeyPath="yes" />
       </Component>
       <Component Id="LightcraftFontLicences">
         <File Id="LightcraftFontLicencesFile" Source="$(var.BinDir)\FONT-LICENCES.txt" KeyPath="yes" />

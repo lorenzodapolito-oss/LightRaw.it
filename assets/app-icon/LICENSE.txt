@@ -1,6 +1,6 @@
-LightCraft app icon (lightcraft.svg and every file derived from it in this directory:
-lightcraft-small.svg, lightcraft-1024.png, lightcraft-macos-512.png, lightcraft.icns,
-lightcraft.ico, hicolor/).
+LightRaw app icon (lightraw-source.png and every file derived from it in this directory:
+lightraw-1024.png, lightraw-macos-512.png, lightraw.icns, lightraw.ico, hicolor/), plus the
+upstream LightCraft icon (lightcraft.svg, lightcraft-small.svg).
 
 Original artwork made for this project by the LightCraft project owner in ArtCraft (no
 third-party material). Licensed like the rest of LightCraft, under either of

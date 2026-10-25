@@ -58,9 +58,9 @@ STAGE="$WORK/root"
 rm -rf "$WORK"
 
 # ---- stage an FHS tree (shared by every format) -------------------------------------------------
-install -Dm755 "$BIN/lightcraft" "$STAGE/usr/bin/lightcraft"
-install -Dm755 "$BIN/lightcraft-cli" "$STAGE/usr/bin/lightcraft-cli"
-"${CROSS_COMPILE:-}strip" "$STAGE/usr/bin/lightcraft" "$STAGE/usr/bin/lightcraft-cli" 2>/dev/null || true
+install -Dm755 "$BIN/lightraw" "$STAGE/usr/bin/lightraw"
+install -Dm755 "$BIN/lightraw-cli" "$STAGE/usr/bin/lightraw-cli"
+"${CROSS_COMPILE:-}strip" "$STAGE/usr/bin/lightraw" "$STAGE/usr/bin/lightraw-cli" 2>/dev/null || true
 install -Dm644 "$HERE/$APP_ID.desktop" "$STAGE/usr/share/applications/$APP_ID.desktop"
 install -Dm644 "$HERE/$APP_ID.mime.xml" "$STAGE/usr/share/mime/packages/$APP_ID.xml"
 mkdir -p "$STAGE/usr/share/metainfo"
@@ -122,7 +122,7 @@ if has appimage; then
   APPDIR="$WORK/LightCraft.AppDir"
   cp -R "$STAGE" "$APPDIR"
   mv "$APPDIR/usr/share/doc" "$WORK/doc-unused"
-  ln -s usr/bin/lightcraft "$APPDIR/AppRun"
+  ln -s usr/bin/lightraw "$APPDIR/AppRun"
   cp "$HERE/$APP_ID.desktop" "$APPDIR/$APP_ID.desktop"
   cp "$ROOT/assets/app-icon/hicolor/256x256/apps/$APP_ID.png" "$APPDIR/$APP_ID.png"
   ln -s "$APP_ID.png" "$APPDIR/.DirIcon"
@@ -184,9 +184,9 @@ if has appimage; then
 fi
 
 if [[ -z "${CROSS_TARGET:-}" ]]; then
-  "$STAGE/usr/bin/lightcraft-cli" --version
+  "$STAGE/usr/bin/lightraw-cli" --version
 elif [[ -n "${EMULATOR:-}" ]]; then
-  "$EMULATOR" "$STAGE/usr/bin/lightcraft-cli" --version
+  "$EMULATOR" "$STAGE/usr/bin/lightraw-cli" --version
 fi
 echo "==> done"
 ls -lh "$DIST"

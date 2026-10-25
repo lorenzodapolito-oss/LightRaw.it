@@ -105,8 +105,8 @@ notarize() {
 echo "==> assembling $APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 # Executable and icon carry the display name (CFBundleExecutable / CFBundleIconFile).
-cp "$WORK/bin/lightcraft" "$APP/Contents/MacOS/LightCraft"
-cp "$ROOT/assets/app-icon/lightcraft.icns" "$APP/Contents/Resources/LightCraft.icns"
+cp "$WORK/bin/lightraw" "$APP/Contents/MacOS/LightCraft"
+cp "$ROOT/assets/app-icon/lightraw.icns" "$APP/Contents/Resources/LightCraft.icns"
 sed -e "s/@VERSION@/$VERSION/g" -e "s/@SHORT_VERSION@/$SHORT_VERSION/g" \
   -e "s/@BUILD_SHA@/${LIGHTCRAFT_BUILD_SHA:-unknown}/g" \
   "$HERE/Info.plist.in" >"$APP/Contents/Info.plist"
@@ -212,7 +212,7 @@ fi
 echo "==> building $CLI_ZIP"
 CLI_DIR="$WORK/lightcraft-cli-$VERSION-macos-$ARCH"
 mkdir -p "$CLI_DIR"
-cp "$WORK/bin/lightcraft-cli" "$CLI_DIR/"
+cp "$WORK/bin/lightraw-cli" "$CLI_DIR/"
 copy_docs "$CLI_DIR"
 # Same entitlements as the app: `--opt addToPhotos=true` / `app.export {addToPhotos}` send Apple
 # Events to Photos through osascript too (macOS asks about the app that started the CLI, usually
@@ -224,6 +224,6 @@ ditto -c -k --keepParent "$CLI_DIR" "$CLI_ZIP"
 # A bare Mach-O can't carry a stapled ticket; Gatekeeper looks the notarization up online.
 if [[ "$NOTARIZE" = 1 ]]; then notarize "$CLI_ZIP"; fi
 
-"$WORK/bin/lightcraft-cli" --version
+"$WORK/bin/lightraw-cli" --version
 echo "==> done"
 ls -lh "$DMG" "$CLI_ZIP"
