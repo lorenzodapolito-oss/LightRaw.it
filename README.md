@@ -13,7 +13,8 @@
 
 - **Own identity.** LightRaw icon, window title "LightRaw.it di Lorenzo D'Apolito", and program names `lightraw.exe` and `lightraw-cli.exe`.
 - **Portable copy** for Windows (see below).
-- **Planned:** the Camera Raw features of [DarkRaw](https://github.com/lorenzodapolito-oss/DarkRaw) in the Develop module: Auto, white-balance eyedropper and auto white balance, a Geometry panel with a crop frame and grid, and compact sliders.
+- **Compact sliders.** Every slider in the side panels and dialogs is one line (name, bar, value) instead of two, so many more controls fit on screen.
+- **Already in LightCraft:** Auto, the white-balance eyedropper, the Geometry panel with its grid and the crop aspect ratios are native features, so there was nothing to port from [DarkRaw](https://github.com/lorenzodapolito-oss/DarkRaw).
 
 ## Build and run on Windows
 

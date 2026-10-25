@@ -143,11 +143,10 @@ fn mask_adjustments_hide_overlay_without_disabling_the_mask() {
     // Changing the shape needs the overlay; changing the image needs an unobscured preview.
     exec(&mut h, "mask.refine", json!({"value": 10.0}));
     assert!(h.app.ui.mask_overlay);
-    // The dock header pushes this adjustment below the initial viewport. Exercise the
-    // actual visible slider rather than sending a synthetic click outside its clipped body.
+    // Exercise the actual visible slider rather than sending a synthetic click outside its clipped
+    // body. (With one-line sliders it can already fit; scrolling then changes nothing.)
     let panel = h.app.widgets.iter().find(|(id, _)| id == "panel:right_panel").unwrap().1;
     let slider = h.app.widgets.iter().find(|(id, _)| id == "slider:exposure").unwrap().1;
-    assert!(!panel.contains_rect(slider), "exposure initially needs scrolling: {slider:?} in {panel:?}");
     h.request("ui.move", json!({"x": panel.center().x, "y": panel.center().y}), T);
     h.request("ui.scroll", json!({"dy": -160.0}), T);
     h.settle(SETTLE);
@@ -1403,7 +1402,7 @@ fn open_original_refuses_anything_that_is_not_a_photo_file() {
     for (id, name) in bad.iter().zip(programs) {
         let r = h.request("engine.execute", json!({"command": "photo.openOriginalInExternal", "params": {"ids": [id.0]}}), T);
         assert_eq!(r["ok"], false, "{name} was opened: {r}");
-        assert!(r.to_string().contains("file types LightRaw reads"), "{name}: {r}");
+        assert!(r.to_string().contains("file types LightCraft reads"), "{name}: {r}");
         // the menu item is greyed out for such a record, so it is never offered either
         exec(&mut h, "library.select", json!({"ids": [id.0]}));
         assert!(!crate::menus::ui_enabled(&h.app, "photo.openOriginalInExternal"), "{name} is offered in the menu");

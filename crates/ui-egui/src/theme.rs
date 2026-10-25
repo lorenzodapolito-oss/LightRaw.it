@@ -78,6 +78,10 @@ pub struct Tokens {
     pub panel_w: f32,
     pub strip_w: f32,
     pub slider_row_h: f32,
+    /// One-line sliders (label, track and value side by side) instead of Lightroom's two lines.
+    pub slider_compact: bool,
+    /// The row height of a one-line slider.
+    pub slider_compact_h: f32,
     pub section_h: f32,
     pub film_h: f32,
 }
@@ -157,6 +161,8 @@ impl Default for Tokens {
             panel_w: 270.0,
             strip_w: 48.0,
             slider_row_h: 45.0,
+            slider_compact: true,
+            slider_compact_h: 24.0,
             section_h: 57.0,
             film_h: 142.0,
         }

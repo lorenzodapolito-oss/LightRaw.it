@@ -257,11 +257,9 @@ const THUMB_RING: f32 = 7.0;
 pub fn slider(ui: &mut Ui, spec: &ControlSpec, value: f64, enabled: bool, label_override: Option<&str>) -> SliderOut {
     let t = Tokens::get(ui.ctx());
     let w = ui.available_width();
-    let (row, _) = ui.allocate_exact_size(vec2(w, t.slider_row_h), Sense::hover());
-    let pad_l = 24.0;
-    let pad_r = 22.0;
-    let label_rect = Rect::from_min_size(pos2(row.left() + pad_l, row.top() + 4.0), vec2(w - pad_l - pad_r, 18.0));
-    let track_rect = Rect::from_min_max(pos2(row.left() + pad_l, row.top() + 22.0), pos2(row.right() - pad_r, row.top() + 40.0));
+    let compact = t.slider_compact;
+    let (row, _) = ui.allocate_exact_size(vec2(w, if compact { t.slider_compact_h } else { t.slider_row_h }), Sense::hover());
+    let (label_rect, track_rect, value_rect) = slider_rects(row, compact);
     let id = ui.id().with(spec.id);
     let resp = ui.interact(track_rect.expand2(vec2(8.0, 2.0)), id, if enabled { Sense::click_and_drag() } else { Sense::hover() });
     // Keyboard focus survives leaving the row; vertical wheel edits need a fresh click or drag
@@ -328,7 +326,6 @@ pub fn slider(ui: &mut Ui, spec: &ControlSpec, value: f64, enabled: bool, label_
     register(ui.ctx(), format!("slider:{}", spec.id), track_rect);
     // the value: click it to type an exact one, drag it sideways to scrub (over the label, so it
     // takes the click)
-    let value_rect = Rect::from_min_max(pos2(label_rect.right() - 64.0, label_rect.top()), label_rect.max);
     let value_resp = ui.interact(value_rect, id.with("value"), if enabled { Sense::click_and_drag() } else { Sense::hover() });
     crate::widgets::announce(&value_resp, format!("{label_text}: {}", crate::i18n::tr("Click to type a value, drag to change it")));
     register(ui.ctx(), format!("sliderValue:{}", spec.id), value_rect);
@@ -572,9 +569,16 @@ pub fn slider(ui: &mut Ui, spec: &ControlSpec, value: f64, enabled: bool, label_
     let hovered = resp.hovered() || resp.dragged();
     let text_c = if enabled { t.text_label } else { t.text_disabled };
     let p = ui.painter();
-    p.text(label_rect.left_center(), Align2::LEFT_CENTER, crate::i18n::tr(label_override.unwrap_or(spec.label)), t.font(12.5), text_c);
+    // a one-line slider has less room for the name: it is clipped to its own column
+    p.with_clip_rect(label_rect.expand2(vec2(0.0, 4.0))).text(
+        label_rect.left_center(),
+        Align2::LEFT_CENTER,
+        crate::i18n::tr(label_override.unwrap_or(spec.label)),
+        t.font(12.5),
+        text_c,
+    );
     if typing.is_none() {
-        p.text(label_rect.right_center(), Align2::RIGHT_CENTER, shown_value(spec, v), t.font(12.5), text_c);
+        p.text(value_rect.right_center(), Align2::RIGHT_CENTER, shown_value(spec, v), t.font(12.5), text_c);
         // the scrub pointer, as over Lightroom's values: a drag here changes the value
         if enabled && (value_resp.hovered() || scrub.is_some()) {
             ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeHorizontal);
@@ -597,6 +601,27 @@ pub fn slider(ui: &mut Ui, spec: &ControlSpec, value: f64, enabled: bool, label_
         ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeHorizontal);
     }
     out
+}
+
+/// The label, track and value rectangles of a slider row. Lightroom's layout is two lines (name and
+/// value above, track below); the compact one puts the name, the track and the value on one line.
+pub(crate) fn slider_rects(row: Rect, compact: bool) -> (Rect, Rect, Rect) {
+    if compact {
+        let (pad_l, pad_r, value_w, gap) = (12.0, 10.0, 46.0, 6.0);
+        let inner = (row.width() - pad_l - pad_r).max(0.0);
+        let label_w = (inner * 0.34).clamp(56.0, 118.0).min(inner * 0.5);
+        let top = row.top() + (row.height() - 18.0) / 2.0;
+        let label = Rect::from_min_size(pos2(row.left() + pad_l, top), vec2(label_w, 18.0));
+        let value = Rect::from_min_size(pos2(row.right() - pad_r - value_w, top), vec2(value_w, 18.0));
+        let track = Rect::from_min_max(pos2(label.right() + gap, top), pos2((value.left() - gap).max(label.right() + gap), top + 18.0));
+        (label, track, value)
+    } else {
+        let (pad_l, pad_r) = (24.0, 22.0);
+        let label = Rect::from_min_size(pos2(row.left() + pad_l, row.top() + 4.0), vec2(row.width() - pad_l - pad_r, 18.0));
+        let track = Rect::from_min_max(pos2(row.left() + pad_l, row.top() + 22.0), pos2(row.right() - pad_r, row.top() + 40.0));
+        let value = Rect::from_min_max(pos2(label.right() - 64.0, label.top()), label.max);
+        (label, track, value)
+    }
 }
 
 /// Convert vertical wheel movement to bounded slider steps, keeping sub-notch
@@ -623,7 +648,7 @@ pub fn section_header(ui: &mut Ui, id: &str, title: &str, open: bool, enabled: O
     let title = crate::i18n::tr(title);
     let t = Tokens::get(ui.ctx());
     let w = ui.available_width();
-    let (r, resp) = ui.allocate_exact_size(vec2(w, 52.0), Sense::click());
+    let (r, resp) = ui.allocate_exact_size(vec2(w, if t.slider_compact { 38.0 } else { 52.0 }), Sense::click());
     resp.widget_info(|| egui::WidgetInfo::selected(egui::WidgetType::CollapsingHeader, true, open, title));
     register(ui.ctx(), format!("section:{id}"), r);
     let p = ui.painter();
@@ -799,6 +824,31 @@ pub fn dropdown_within(ui: &mut Ui, id: &str, text: &str, font: egui::FontId, co
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn compact_slider_puts_label_track_and_value_on_one_line() {
+        let row = Rect::from_min_size(pos2(0.0, 100.0), vec2(270.0, 24.0));
+        let (label, track, value) = slider_rects(row, true);
+        assert!(label.right() < track.left() && track.right() < value.left());
+        assert_eq!(label.center().y, track.center().y);
+        assert_eq!(track.center().y, value.center().y);
+        assert!(row.contains_rect(label) && row.contains_rect(track) && row.contains_rect(value));
+        assert!(track.width() > 80.0, "the track keeps room to drag: {}", track.width());
+    }
+
+    #[test]
+    fn compact_slider_survives_a_tiny_row() {
+        let (label, track, value) = slider_rects(Rect::from_min_size(pos2(0.0, 0.0), vec2(20.0, 24.0)), true);
+        assert!(track.width() >= 0.0 && label.width() >= 0.0 && value.width() >= 0.0);
+    }
+
+    #[test]
+    fn two_line_slider_keeps_the_lightroom_layout() {
+        let row = Rect::from_min_size(pos2(0.0, 0.0), vec2(270.0, 45.0));
+        let (label, track, value) = slider_rects(row, false);
+        assert!(label.bottom() <= track.top());
+        assert_eq!(value.right(), label.right());
+    }
+
     use super::*;
 
     #[test]
