@@ -92,6 +92,9 @@ pub struct CanvasMap {
     to_norm: Affine,
     from_norm: Affine,
     k: f32,
+    /// The crop tool shows the photo turned by this many radians about its centre behind an upright
+    /// frame (zero everywhere else): screen points are turned back before they map to the photo.
+    spin: f32,
 }
 
 impl CanvasMap {
@@ -99,14 +102,28 @@ impl CanvasMap {
         let k = 8.0f32;
         let (w, h) = ((rect.width() * k).round().max(1.0) as usize, (rect.height() * k).round().max(1.0) as usize);
         let to_norm = frame.out_to_norm(w, h);
-        CanvasMap { rect, to_norm, from_norm: to_norm.inverse().unwrap_or(Affine::IDENTITY), k }
+        CanvasMap { rect, to_norm, from_norm: to_norm.inverse().unwrap_or(Affine::IDENTITY), k, spin: 0.0 }
+    }
+    /// The same map for a photo shown turned by `spin` radians about the middle of `rect`.
+    fn with_spin(mut self, spin: f32) -> CanvasMap {
+        self.spin = if spin.is_finite() { spin } else { 0.0 };
+        self
+    }
+    fn turn(&self, p: Pos2, by: f32) -> Pos2 {
+        if by == 0.0 {
+            return p;
+        }
+        let (s, c) = by.sin_cos();
+        let d = p - self.rect.center();
+        self.rect.center() + vec2(c * d.x - s * d.y, s * d.x + c * d.y)
     }
     pub fn norm(&self, p: Pos2) -> Point {
+        let p = self.turn(p, -self.spin);
         self.to_norm.apply(Point::new(((p.x - self.rect.left()) * self.k) as f64, ((p.y - self.rect.top()) * self.k) as f64))
     }
     pub fn screen(&self, n: Point) -> Pos2 {
         let q = self.from_norm.apply(n);
-        pos2(self.rect.left() + q.x as f32 / self.k, self.rect.top() + q.y as f32 / self.k)
+        self.turn(pos2(self.rect.left() + q.x as f32 / self.k, self.rect.top() + q.y as f32 / self.k), self.spin)
     }
 }
 
@@ -525,6 +542,8 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui) {
     let crop_tool = right == RightPanel::Crop;
     let frame = Frame::with_lens(photo.width.max(1) as usize, photo.height.max(1) as usize, &d, !crop_tool, photo.embedded_lens.as_ref());
     let aspect = frame.aspect() as f32;
+    // the crop tool turns the photo behind an upright frame instead of tilting the frame
+    let spin = if crop_tool && !matches!(app.ui.tool.as_str(), "straighten" | "guidedUpright") { crop_spin(d.crop.geometry.angle, &frame) } else { 0.0 };
     let ppp = ui.ctx().pixels_per_point();
     let area = canvas.shrink(if fullscreen {
         0.0
@@ -789,7 +808,16 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui) {
             return "none";
         };
         let image_rect = snap_fit_rect(fit_texture_rect(r, tex.size), tex.size, ppp);
-        p.with_clip_rect(clip).image(tex.tex.id(), image_rect, Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)), Color32::WHITE);
+        if spin != 0.0 {
+            let mut mesh = egui::epaint::Mesh::with_texture(tex.tex.id());
+            for (corner, uv) in rect_corners(image_rect).into_iter().zip([pos2(0.0, 0.0), pos2(1.0, 0.0), pos2(1.0, 1.0), pos2(0.0, 1.0)]) {
+                mesh.vertices.push(egui::epaint::Vertex { pos: turn_about(corner, image_rect.center(), spin), uv, color: Color32::WHITE });
+            }
+            mesh.indices.extend([0, 1, 2, 0, 2, 3]);
+            p.with_clip_rect(clip).add(egui::Shape::mesh(mesh));
+        } else {
+            p.with_clip_rect(clip).image(tex.tex.id(), image_rect, Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)), Color32::WHITE);
+        }
         what
     };
     // soft proofing: a paper-white surround and the proof's name, as Lightroom shows it
@@ -896,7 +924,7 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui) {
     // View ▸ Loupe Overlay ▸ Layout Image, over the photo (the After view in a before/after)
     super::layout_overlay::draw(app, &p, img_rect);
     register(ui.ctx(), "canvas:image", img_rect);
-    let map = CanvasMap::new(&frame, img_rect);
+    let map = CanvasMap::new(&frame, img_rect).with_spin(spin);
     info_overlay(app, &p, canvas, &photo);
     if !fullscreen {
         filter_pill(app, ui, canvas);
@@ -1729,7 +1757,8 @@ fn crop_overlay(app: &mut LightcraftApp, ui: &mut egui::Ui, resp: &egui::Respons
     // top-left corner elsewhere)
     let quad = flipped_corners(&pts, frame.flip_h, frame.flip_v);
     if pts.len() == 4 {
-        p.add(outside_crop_mesh(map.rect, &quad, Color32::from_black_alpha(150)));
+        let photo = rect_corners(map.rect).map(|c| turn_about(c, map.rect.center(), map.spin));
+        p.add(outside_crop_mesh_poly(&photo, &quad, Color32::from_black_alpha(150)));
     }
     p.add(egui::Shape::closed_line(pts.clone(), Stroke::new(1.0, Color32::WHITE)));
     // overlay guides
@@ -2176,9 +2205,41 @@ fn flipped_corners(pts: &[Pos2], flip_h: bool, flip_v: bool) -> [Pos2; 4] {
 /// the two rectangles are aligned. Rotated, those quads cross themselves and each other, which
 /// showed as dimmed wedges inside the crop and doubly dark ones outside, growing with the angle.
 /// A degenerate quad (a point, a line, a non-finite corner) dims nothing.
+#[cfg(test)]
 fn outside_crop_mesh(img: Rect, quad: &[Pos2; 4], color: Color32) -> egui::epaint::Mesh {
+    if !img.is_finite() {
+        return egui::epaint::Mesh::default();
+    }
+    outside_crop_mesh_poly(&rect_corners(img), quad, color)
+}
+
+/// The photo's corners, clockwise from the top left.
+fn rect_corners(r: Rect) -> [Pos2; 4] {
+    [r.left_top(), r.right_top(), r.right_bottom(), r.left_bottom()]
+}
+
+/// `p` turned by `by` radians about `c`.
+fn turn_about(p: Pos2, c: Pos2, by: f32) -> Pos2 {
+    let (s, co) = by.sin_cos();
+    let d = p - c;
+    c + vec2(co * d.x - s * d.y, s * d.x + co * d.y)
+}
+
+/// How far the crop tool turns the photo on screen for a straighten `angle` (degrees): the frame
+/// stays upright, so the photo goes the way the straightened frame would have. A single flip
+/// mirrors the turn.
+fn crop_spin(angle: f64, frame: &Frame) -> f32 {
+    if !angle.is_finite() {
+        return 0.0;
+    }
+    let sign = if frame.flip_h != frame.flip_v { -1.0 } else { 1.0 };
+    (angle.to_radians() * sign) as f32
+}
+
+/// `outside_crop_mesh` for a photo that is any convex quad (the crop tool shows it turned).
+fn outside_crop_mesh_poly(photo: &[Pos2; 4], quad: &[Pos2; 4], color: Color32) -> egui::epaint::Mesh {
     let mut mesh = egui::epaint::Mesh::default();
-    if !quad.iter().all(|q| q.x.is_finite() && q.y.is_finite()) || !img.is_finite() {
+    if !quad.iter().all(|q| q.x.is_finite() && q.y.is_finite()) || !photo.iter().all(|q| q.x.is_finite() && q.y.is_finite()) {
         return mesh;
     }
     let centre = pos2((quad[0].x + quad[1].x + quad[2].x + quad[3].x) / 4.0, (quad[0].y + quad[1].y + quad[2].y + quad[3].y) / 4.0);
@@ -2206,7 +2267,7 @@ fn outside_crop_mesh(img: Rect, quad: &[Pos2; 4], color: Color32) -> egui::epain
         }
         Some(out)
     };
-    let photo = [img.left_top(), img.right_top(), img.right_bottom(), img.left_bottom()];
+    let photo = *photo;
     for i in 0..4 {
         let outside = |q: Pos2| side(i, q).map(|d| -d);
         let inside_next = |q: Pos2| side(i + 1, q);
@@ -3214,6 +3275,25 @@ fn straighten_overlay(app: &mut LightcraftApp, ui: &mut egui::Ui, resp: &egui::R
 
 #[cfg(test)]
 mod tests {
+    /// Straightening in the crop tool turns the photo, not the frame: with the photo spun by the
+    /// angle, the crop box's corners land on an upright rectangle.
+    #[test]
+    fn the_crop_frame_stays_upright_while_the_photo_turns() {
+        use super::{CanvasMap, DevelopSettings, Frame, crop_spin, frame_crop_quad};
+        let mut d = DevelopSettings::default();
+        d.crop.geometry.angle = 7.0;
+        d.crop.geometry.rect = lightcraft_geom::Rect::new(0.2, 0.25, 0.8, 0.75);
+        let frame = Frame::with_lens(300, 200, &d, false, None);
+        let rect = egui::Rect::from_min_size(egui::pos2(10.0, 20.0), egui::vec2(300.0, 200.0));
+        let map = CanvasMap::new(&frame, rect).with_spin(crop_spin(7.0, &frame));
+        let pts: Vec<egui::Pos2> = frame_crop_quad(&d, &frame).iter().map(|q| map.screen(*q)).collect();
+        assert!((pts[0].y - pts[1].y).abs() < 0.5 && (pts[0].x - pts[3].x).abs() < 0.5, "upright frame: {pts:?}");
+        // and the photo's own corner moved: a still frame with a tilted photo
+        let tilted = CanvasMap::new(&frame, rect).screen(lightcraft_geom::Point::new(0.0, 0.0));
+        let turned = map.screen(lightcraft_geom::Point::new(0.0, 0.0));
+        assert!(tilted.distance(turned) > 1.0);
+    }
+
     /// The rotation pointer's arc bulges away from the side of the crop box it is on, and follows
     /// a box that is itself rotated.
     #[test]

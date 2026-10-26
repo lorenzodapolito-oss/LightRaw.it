@@ -876,6 +876,8 @@ fn main() -> eframe::Result {
         logging::record_panics(logger);
     }
     alloc_release::install();
+    // LightRaw speaks Italian unless the person picks another language (or the environment names one)
+    lightcraft_ui_egui::i18n::set_default_language(lightcraft_ui_egui::i18n::Locale::It);
     let mut control_port = control_port_from("LIGHTCRAFT_CONTROL_PORT", std::env::var("LIGHTCRAFT_CONTROL_PORT").ok().filter(|v| !v.is_empty()));
     let mut files = Vec::new();
     let mut seed_demo = true;
@@ -999,6 +1001,10 @@ fn main() -> eframe::Result {
                 let mut app = LightcraftApp::new(session, services(cc, app_log_file.as_deref()));
                 if let Some(ui) = prefs {
                     app.ui = ui;
+                }
+                if !app.ui.italian_default_applied {
+                    app.ui.language = lightcraft_ui_egui::i18n::Locale::It;
+                    app.ui.italian_default_applied = true;
                 }
                 // the recent libraries to choose from (issue #1290), checked on a worker once shown
                 if launch == Launch::Ask {

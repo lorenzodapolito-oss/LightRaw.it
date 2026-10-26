@@ -1079,6 +1079,31 @@ pub fn show(app: &mut LightcraftApp, ctx: &egui::Context) {
                             });
                         });
                     }
+                    if opts.destination_mode == D::SpecificFolder && !cfg!(target_arch = "wasm32") {
+                        field(ui, "New folder", |ui| {
+                            let name_id = egui::Id::new("exportNewFolderName");
+                            let mut name: String = ui.data_mut(|d| d.get_temp(name_id)).unwrap_or_default();
+                            let mut create = false;
+                            trailing_button_row(ui, |ui| {
+                                create = crate::widgets::text_button(ui, "exportNewFolder", crate::i18n::tr("Create"), false).clicked();
+                                crate::widgets::named(
+                                    ui.add(egui::TextEdit::singleline(&mut name).hint_text(crate::i18n::tr("Folder name")).desired_width(ui.available_width())),
+                                    crate::i18n::tr("Folder name"),
+                                );
+                            });
+                            if create {
+                                match create_export_folder(dir, &name) {
+                                    Ok(path) => {
+                                        *dir = path;
+                                        name.clear();
+                                        app.ui.status = crate::i18n::tr("Folder created").to_string();
+                                    }
+                                    Err(e) => app.ui.status = e,
+                                }
+                            }
+                            ui.data_mut(|d| d.insert_temp(name_id, name));
+                        });
+                    }
                     field(ui, "Subfolder", |ui| {
                         crate::widgets::named(ui.add(egui::TextEdit::singleline(&mut opts.subfolder).hint_text(crate::i18n::tr("none")).desired_width(f32::INFINITY)), crate::i18n::tr("Subfolder"))
                     });
@@ -2621,5 +2646,39 @@ mod cull_dialog_tests {
         h.step();
         h.step();
         assert_eq!(burst(&h), (1800.0, 1.0));
+    }
+}
+
+/// Makes the folder `name` inside `parent` for an export and returns its path. A name that would
+/// leave `parent` (a separator, `..`) or an empty one is refused; an existing folder is used as is.
+pub(crate) fn create_export_folder(parent: &str, name: &str) -> Result<String, String> {
+    let name = name.trim();
+    if parent.trim().is_empty() {
+        return Err(crate::i18n::tr("Choose a folder first").to_string());
+    }
+    if name.is_empty() || name == "." || name == ".." || name.contains(['/', '\\', ':', '\0']) {
+        return Err(crate::i18n::tr("Type a folder name without slashes").to_string());
+    }
+    let path = std::path::Path::new(parent.trim()).join(name);
+    std::fs::create_dir_all(&path).map_err(|e| format!("{}: {e}", crate::i18n::tr("Could not create the folder")))?;
+    Ok(path.to_string_lossy().into_owned())
+}
+
+#[cfg(test)]
+mod new_folder_tests {
+    use super::create_export_folder;
+
+    #[test]
+    fn creates_a_folder_inside_the_destination_and_refuses_escapes() {
+        let base = std::env::temp_dir().join(format!("lr-newfolder-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&base);
+        std::fs::create_dir_all(&base).expect("temp dir");
+        let parent = base.to_string_lossy().into_owned();
+        let made = create_export_folder(&parent, " Matrimonio ").expect("created");
+        assert!(std::path::Path::new(&made).is_dir() && made.ends_with("Matrimonio"));
+        assert!(create_export_folder(&parent, "").is_err());
+        assert!(create_export_folder(&parent, "../fuori").is_err());
+        assert!(create_export_folder("", "a").is_err());
+        let _ = std::fs::remove_dir_all(&base);
     }
 }

@@ -784,6 +784,9 @@ pub struct UiState {
     pub docking: Option<crate::docking::Workspace>,
     #[serde(default = "crate::i18n::default_language")]
     pub language: crate::i18n::Locale,
+    /// LightRaw starts in Italian: set once the saved language was moved to it (a library
+    /// opened by an older build kept English), so a later choice of another language sticks.
+    pub italian_default_applied: bool,
     /// The Build Previews run last announced (its identity, finished?).
     #[serde(skip)]
     pub preview_build_seen: Option<(usize, bool)>,
@@ -1483,6 +1486,7 @@ impl Default for UiState {
             window: None,
             docking: None,
             language: crate::i18n::default_language(),
+            italian_default_applied: false,
             preview_build_seen: None,
             unsaved_seen: false,
             frame_rate: std::env::var("LIGHTCRAFT_FPS").is_ok_and(|v| matches!(v.trim(), "1" | "on" | "true" | "yes")),
