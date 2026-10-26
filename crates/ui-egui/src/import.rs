@@ -711,8 +711,21 @@ pub fn start(app: &mut LightcraftApp, d: &ImportDialog) -> Result<Value, String>
     }
     let undo0 = app.session.undo.len();
     let mut album = d.album;
-    if album.is_none() && !d.new_album.trim().is_empty() {
-        let r = app.session.execute("album.create", &json!({"name": d.new_album.trim()})).map_err(|e| e.to_string())?;
+    // LightRaw: an import without a chosen album gets its own, named after the folder, so that the
+    // filmstrip can show exactly the photos just imported (and nothing from earlier)
+    let mut new_album = d.new_album.trim().to_string();
+    if album.is_none() && new_album.is_empty() {
+        let folder = queue
+            .first()
+            .and_then(|p| std::path::Path::new(p).parent())
+            .and_then(|p| p.file_name())
+            .map(|n| n.to_string_lossy().trim().to_string())
+            .filter(|n| !n.is_empty())
+            .unwrap_or_else(|| "Importazione".to_string());
+        new_album = folder;
+    }
+    if album.is_none() && !new_album.is_empty() {
+        let r = app.session.execute("album.create", &json!({"name": new_album})).map_err(|e| e.to_string())?;
         album = r["id"].as_u64();
     }
     let mode = match (d.copy, d.move_files) {
@@ -953,12 +966,30 @@ fn finish(app: &mut LightcraftApp, ctx: &egui::Context, task: ImportTask) {
         return;
     }
     if let Some(f) = task.first.filter(|_| !task.moved_on) {
-        // a view the new photos aren't in (an album, Picks, a Local folder) would leave the active
-        // photo off screen: show All Photos, as Lightroom shows the import's own collection (#1446)
-        if !app.session.visible().contains(&lightcraft_catalog::PhotoId(f)) {
-            let _ = app.run("library.source", json!({"kind": "all"}));
+        if task.imported > 0 {
+            // what was just imported: only its photos (its album), a thumbnail of each in the filmstrip
+            match task.params["album"].as_u64() {
+                Some(a) => {
+                    let _ = app.run("library.source", json!({"kind": "album", "id": a}));
+                }
+                None => {
+                    let _ = app.run("library.source", json!({"kind": "recentlyAdded"}));
+                }
+            }
+            if !app.session.visible().contains(&lightcraft_catalog::PhotoId(f)) {
+                let _ = app.run("library.source", json!({"kind": "all"}));
+            }
+            let _ = app.run("library.select", json!({"ids": [f]}));
+            app.ui.view = crate::state::ViewMode::Detail;
+            app.ui.filmstrip = true;
+        } else {
+            // a view the new photos aren't in (an album, Picks, a Local folder) would leave the active
+            // photo off screen: show All Photos, as Lightroom shows the import's own collection (#1446)
+            if !app.session.visible().contains(&lightcraft_catalog::PhotoId(f)) {
+                let _ = app.run("library.source", json!({"kind": "all"}));
+            }
+            let _ = app.run("library.select", json!({"ids": [f]}));
         }
-        let _ = app.run("library.select", json!({"ids": [f]}));
     }
     let plural = |n: usize| if n == 1 { "" } else { "s" };
     // nothing new, only files the library already has: show where they are (Recently Deleted is

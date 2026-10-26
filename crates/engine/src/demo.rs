@@ -8,7 +8,19 @@ use lightcraft_develop::DevelopSettings;
 use crate::Session;
 
 pub fn load(s: &mut Session) {
-    let scenes = lightcraft_scenes::demo_library();
+    load_scenes(s, None);
+}
+
+/// Only the first demo photo, with no albums: what LightRaw seeds a new library with.
+pub fn load_one(s: &mut Session) {
+    load_scenes(s, Some(1));
+}
+
+fn load_scenes(s: &mut Session, limit: Option<usize>) {
+    let mut scenes = lightcraft_scenes::demo_library();
+    if let Some(n) = limit {
+        scenes.truncate(n);
+    }
     let mut ids = Vec::new();
     let mut ops = Vec::new();
     for sc in &scenes {
@@ -98,6 +110,10 @@ pub fn load(s: &mut Session) {
         ops.push(Op::AddAlbum {
             album: Album { id, name: name.into(), parent, folder: false, photos, cover, smart: None, quick: false, order: None },
         });
+    }
+    if limit.is_some() {
+        // a single photo needs no albums
+        ops.retain(|op| !matches!(op, Op::AddAlbum { .. }));
     }
     for op in ops {
         let _ = s.catalog.apply(op);
@@ -331,6 +347,18 @@ fn trim_scene_cache(c: &mut SceneCache, limit: usize) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn load_one_seeds_a_single_photo_and_no_albums() {
+        let mut s = Session::new();
+        load_one(&mut s);
+        assert_eq!(s.catalog.len(), 1);
+        assert!(s.catalog.albums().next().is_none(), "no albums for one photo");
+        assert_eq!(s.visible_cloned().len(), 1);
+        let mut all = Session::new();
+        load(&mut all);
+        assert!(all.catalog.len() > 1, "the full demo library is unchanged");
+    }
 
     fn small_scene() -> lightcraft_scenes::Scene {
         lightcraft_scenes::demo_library().swap_remove(0)

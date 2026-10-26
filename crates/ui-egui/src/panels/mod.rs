@@ -40,6 +40,7 @@ pub mod slideshow;
 pub mod strip;
 pub mod topbar;
 pub mod unnamed;
+pub mod workbar;
 
 use egui::{Align2, Rect, pos2, vec2};
 

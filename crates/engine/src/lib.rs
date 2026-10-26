@@ -229,6 +229,8 @@ pub struct Session {
     /// Auto Sync: edits to the active photo also change the other selected photos (the settings
     /// that changed, nothing else).
     pub auto_sync: bool,
+    /// Seed a new library with one demo photo instead of the whole demo library.
+    pub demo_single: bool,
     pub catalog: Catalog,
     pub source: LibrarySource,
     pub filter: Filter,
@@ -448,6 +450,7 @@ impl Session {
         Session {
             library_generation: LIBRARY_GEN.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
             auto_sync: false,
+            demo_single: false,
             catalog: Catalog::new(),
             source: LibrarySource::All,
             filter: Filter::default(),

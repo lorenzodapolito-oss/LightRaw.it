@@ -451,7 +451,8 @@ mod import_review {
                     assert!(created.photos.contains(&added[0]));
                     assert!(!receives(album));
                 }
-                _ => assert!(h.app.session.catalog.albums().all(|a| !a.photos.contains(&added[0]))),
+                // no album chosen: the import gets its own, so the filmstrip shows only these photos
+                _ => assert_eq!(h.app.session.catalog.albums().filter(|a| a.photos.contains(&added[0])).count(), 1),
             }
             assert_eq!(h.app.session.undo.len(), undo + 1, "{choice}: one undo step");
             exec(&mut h, "edit.undo", json!({}));

@@ -2361,7 +2361,9 @@ mod tests {
         let o = opened(&mut h, json!({"format": "jpeg", "bitDepth": 16}));
         assert_eq!(o.bit_depth, None);
         lightcraft_engine::export::ExportOptions::from_params(&o.to_json()).expect("the dialog's settings export");
-        assert_eq!(opened(&mut h, json!({"format": "tiff", "bitDepth": 32})).bit_depth, Some(32));
+        // LightRaw: the dialog always opens on JPEG, whatever the last export used
+        let o = opened(&mut h, json!({"format": "tiff", "bitDepth": 32}));
+        assert_eq!((o.format, o.bit_depth), (lightcraft_engine::export::ExportFormat::Jpeg, None));
     }
 
     /// Review of #1966: a `path` whose extension names no format exports JPEG here, so its
@@ -2860,7 +2862,7 @@ mod tests {
     /// accessibility and place fields reach the photo.
     #[test]
     fn info_fields_keep_typing_and_save() {
-        let mut h = demo([1300.0, 1000.0]);
+        let mut h = demo([1300.0, 1050.0]);
         let t = Duration::from_secs(10);
         h.request("ui.set", json!({"view": "detail", "right": "info"}), t);
         h.settle(SETTLE);
@@ -4266,6 +4268,7 @@ mod tests {
         crate::import::start_paths(&mut h.app, paths.clone()).unwrap();
         h.settle(SETTLE);
         let id = h.app.session.selection.active.expect("imported photo selected");
+        h.request("engine.execute", json!({"command": "library.source", "params": {"kind": "all"}}), t);
         let n0 = h.app.session.catalog.len();
         h.request("engine.execute", json!({"command": "photo.delete", "params": {"ids": [id.0]}}), t);
         assert!(h.app.session.catalog.photo(id).unwrap().deleted);
@@ -4359,7 +4362,11 @@ mod tests {
         assert!(h.app.import.is_none(), "finished");
         let active = h.app.session.selection.active.expect("a photo is active");
         assert!(!before.contains(&active), "the active photo is a new one: {active:?}");
-        assert_eq!(h.app.session.source, lightcraft_engine::LibrarySource::All);
+        // the import's own album: the photos just imported, none from before
+        let imported_album =
+            h.app.session.catalog.albums().find(|a| a.name.starts_with("lc-ui-import-show")).map(|a| a.id).expect("the import's album");
+        assert_eq!(h.app.session.source, lightcraft_engine::LibrarySource::Album(imported_album));
+        assert_eq!(h.app.session.visible_cloned().len(), 3, "only the imported photos");
         assert!(h.app.session.visible_cloned().contains(&active), "the grid shows the active photo");
         let _ = std::fs::remove_dir_all(&dir);
     }

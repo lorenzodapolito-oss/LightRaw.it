@@ -1606,6 +1606,7 @@ impl LightcraftApp {
         // Order matters: earlier panels take the full edge (top bar spans the window; the tool strip,
         // right panels and left panel run to the bottom; the bottom bar sits between them).
         panels::topbar::show(self, ui);
+        panels::workbar::show(self, ui);
         panels::library_problem::banner(self, ui);
         panels::strip::show(self, ui);
         // filled: the gaps the dock leaves between its panes show chrome, not the dark clear colour

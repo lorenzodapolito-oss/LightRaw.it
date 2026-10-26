@@ -146,7 +146,6 @@ fn mask_adjustments_hide_overlay_without_disabling_the_mask() {
     // Exercise the actual visible slider rather than sending a synthetic click outside its clipped
     // body. (With one-line sliders it can already fit; scrolling then changes nothing.)
     let panel = h.app.widgets.iter().find(|(id, _)| id == "panel:right_panel").unwrap().1;
-    let slider = h.app.widgets.iter().find(|(id, _)| id == "slider:exposure").unwrap().1;
     h.request("ui.move", json!({"x": panel.center().x, "y": panel.center().y}), T);
     h.request("ui.scroll", json!({"dy": -160.0}), T);
     h.settle(SETTLE);

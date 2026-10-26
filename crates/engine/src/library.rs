@@ -489,7 +489,11 @@ impl Session {
         self.source = LibrarySource::All;
         self.library_folder = None;
         if report.created && seed_demo {
-            crate::demo::load(self);
+            if self.demo_single {
+                crate::demo::load_one(self);
+            } else {
+                crate::demo::load(self);
+            }
             journal.snapshot(&self.catalog)?;
         }
         let mut settings = SettingsLoad::default();
