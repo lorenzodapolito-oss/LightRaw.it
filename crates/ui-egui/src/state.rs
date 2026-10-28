@@ -808,6 +808,8 @@ pub struct UiState {
     /// resizes them; within [`LEFT_WIDTH`] / [`RIGHT_WIDTH`]).
     pub left_width: f32,
     pub right_width: f32,
+    /// LD Panel beside the photo (see `panels::ld`).
+    pub ld: crate::panels::ld::LdPanel,
     /// Presets column open (opens to the left of the Edit panel).
     pub presets: bool,
     /// Presets column: show a live thumbnail of the photo with each preset.
@@ -1497,6 +1499,7 @@ impl Default for UiState {
             right_width: RIGHT_WIDTH.default,
             right: RightPanel::Edit,
             right_hidden: RightPanel::None,
+            ld: Default::default(),
             presets: false,
             preset_thumbs: false,
             filmstrip: true,

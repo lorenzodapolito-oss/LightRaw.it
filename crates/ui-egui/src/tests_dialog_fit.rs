@@ -97,8 +97,9 @@ fn export_dialog_is_unchanged_in_a_tall_window() {
     // since #956; 615 wide since the format row gained JPEG XL, #780. On macOS the dialog has one
     // more row, "Add to Apple Photos" (#236), so it is 30 taller there. 8 more since its footer's
     // buttons are the button component's medium size, 30 points, as the welcome's and every dialog's)
+    // (32 more since the "New folder" field under the Export to row)
     // (84 less since the dialog's sliders are one line each, as in the side panels)
-    let height = if cfg!(target_os = "macos") { 832.0 } else { 802.0 };
+    let height = if cfg!(target_os = "macos") { 864.0 } else { 834.0 };
     assert!((dialog.height() - height).abs() <= 1.0, "{dialog:?}");
     assert!((dialog.width() - 615.2).abs() <= 1.0, "{dialog:?}");
 }

@@ -157,6 +157,13 @@ pub const UI_COMMANDS: &[UiCommand] = &[
     ("panel.remove", "Remove", Some("H"), "Window"),
     ("panel.masking", "Masking", Some("M"), "Window"),
     ("panel.redeye", "Red Eye", None, "Window"),
+    ("ldpanel.main", "Main", None, "LD Panel"),
+    ("ldpanel.color", "Color Correction", None, "LD Panel"),
+    ("ldpanel.night", "Night Time", None, "LD Panel"),
+    ("ldpanel.editing", "Editing", None, "LD Panel"),
+    ("ldpanel.final", "Final Touch", None, "LD Panel"),
+    ("ldpanel.export", "Export", None, "LD Panel"),
+    ("ldpanel.hide", "Hide LD Panel", None, "LD Panel"),
     ("panel.presets", "Presets", Some("Shift+P"), "Window"),
     ("panel.info", "Info", Some("I"), "Window"),
     ("panel.keywords", "Keywords", Some("K"), "Window"),
@@ -433,6 +440,9 @@ fn theme_command(app: &mut LightcraftApp, p: &Value) -> Result<Value, String> {
 
 /// Handle UI commands; `None` means "not a UI command — send it to the engine".
 pub fn run_ui_command(app: &mut LightcraftApp, id: &str, p: &Value) -> Option<Result<Value, String>> {
+    if let Some(r) = crate::panels::ld::command(app, id) {
+        return Some(r);
+    }
     if matches!(id, "ui.dock" | "ui.dock.reset") {
         return Some(crate::docking::command(app, id == "ui.dock.reset", p));
     }

@@ -118,7 +118,7 @@ pub fn native_menu_structure(bar: &[(String, Vec<MenuNode>)], keymap: &crate::sh
 }
 
 /// Top-level menus in order (the macOS app menu is added by the host).
-pub const MENUS: &[&str] = &["File", "Edit", "View", "Photo", "Window", "Help"];
+pub const MENUS: &[&str] = &["File", "Edit", "View", "Photo", "Window", "LD Panel", "Help"];
 
 /// Order and grouping per menu: command ids, `---` separators and `@Submenu` placeholders.
 /// Entries with a menu path that aren't listed are appended at the end of their menu, before any
@@ -308,6 +308,10 @@ const LAYOUT: &[(&str, &[&str])] = &[
         ],
     ),
     (
+        "LD Panel",
+        &["ldpanel.main", "ldpanel.color", "ldpanel.night", "ldpanel.editing", "ldpanel.final", "ldpanel.export", "---", "ldpanel.hide"],
+    ),
+    (
         "Help",
         &[
             "app.discord",
@@ -436,6 +440,7 @@ pub fn checked(app: &LightcraftApp, id: &str) -> Option<bool> {
         "panel.info" => panel(RightPanel::Info),
         "panel.keywords" => panel(RightPanel::Keywords),
         "panel.presets" => Some(u.presets),
+        _ if id.starts_with("ldpanel.") => crate::panels::ld::checked(app, id),
         "library.toggleAutoWriteXmp" => Some(app.session.xmp.auto_write),
         _ => None,
     }
@@ -1595,7 +1600,7 @@ mod tests {
         h.step();
         h.step();
         let rect = |id: &str| h.app.widgets.iter().find(|(w, _)| w == id).map(|(_, r)| *r).unwrap_or_else(|| panic!("{id} is on screen"));
-        let titles: Vec<_> = ["File", "Edit", "View", "Photo", "Window", "Help"].iter().map(|t| rect(&format!("menu:{t}"))).collect();
+        let titles: Vec<_> = ["File", "Edit", "View", "Photo", "Window", "LD Panel", "Help"].iter().map(|t| rect(&format!("menu:{t}"))).collect();
         for pair in titles.windows(2) {
             let gap = pair[1].left() - pair[0].right();
             assert!(gap >= 24.0 - 0.5, "headings {:?} and {:?} are only {gap} px apart", pair[0], pair[1]);

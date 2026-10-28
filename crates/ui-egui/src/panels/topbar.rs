@@ -70,7 +70,7 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui) {
             if !app.native_menu {
                 // leave room for the in-window menus left of the (centred) search field
                 let menus_right = full.left() + 140.0 + crate::menubar::bar_width(ui) + 24.0;
-                sw = sw.min(2.0 * (bar.center().x - menus_right)).max(190.0);
+                sw = sw.min(2.0 * (bar.center().x - menus_right)).max(64.0);
             }
             let search_left = bar.center().x - sw / 2.0;
             let sr = Rect::from_center_size(pos2(bar.center().x, full.center().y), vec2(sw, 28.0));
@@ -92,7 +92,7 @@ pub fn show(app: &mut LightcraftApp, ui: &mut egui::Ui) {
                 if !app.native_menu {
                     // no native menu bar (web, Windows, Linux): menus in the top bar
                     ui.add_space(10.0);
-                    let room = search_left - ui.cursor().left() - 16.0;
+                    let room = search_left - ui.cursor().left() - 4.0;
                     crate::menubar::show_in_window(app, ui, room);
                 }
             });

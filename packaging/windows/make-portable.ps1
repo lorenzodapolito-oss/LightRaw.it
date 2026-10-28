@@ -17,7 +17,7 @@
 #>
 param(
   [string]$Bin = (Join-Path $PSScriptRoot '..\..\target\release'),
-  [string]$Out = (Join-Path $PSScriptRoot '..\..\dist\LightRaw-portable')
+  [string]$Out = (Join-Path $PSScriptRoot '..\..\dist\LightRaw-LD-portable')
 )
 $ErrorActionPreference = 'Stop'
 $Root = Resolve-Path (Join-Path $PSScriptRoot '..\..')
@@ -31,7 +31,7 @@ if (Test-Path $Out) { Remove-Item -Recurse -Force $Out }
 New-Item -ItemType Directory -Force -Path $Out | Out-Null
 $Out = Resolve-Path $Out
 
-Copy-Item $Exe (Join-Path $Out 'LightRaw.exe')
+Copy-Item $Exe (Join-Path $Out 'LightRaw-LD.exe')
 $Cli = Join-Path $Bin 'lightraw-cli.exe'
 if (Test-Path $Cli) { Copy-Item $Cli $Out }
 Copy-Item (Join-Path $PSScriptRoot 'portable.txt') $Out
@@ -46,7 +46,7 @@ if ($objdump) {
   $dlls = & $objdump.Source -p $Exe | Select-String 'DLL Name:' | ForEach-Object { ($_ -split ':', 2)[1].Trim() }
   $extra = $dlls | Where-Object { $_ -match '^(libgcc|libstdc\+\+|libwinpthread|libgomp)' }
   if ($extra) {
-    Write-Warning "LightRaw.exe needs DLLs that aren't part of Windows: $($extra -join ', '). Copy them from your WinLibs mingw64\bin folder into $Out."
+    Write-Warning "LightRaw-LD.exe needs DLLs that aren't part of Windows: $($extra -join ', '). Copy them from your WinLibs mingw64\bin folder into $Out."
   } else {
     Write-Host 'No extra DLLs needed.'
   }
